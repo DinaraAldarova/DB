@@ -51,8 +51,13 @@ namespace DB_input
                     int count = 0;
                     try
                     {
+                        Console.WriteLine("Генерация информации...");
                         GeneratingInfo info = new GeneratingInfo();
                         string[] queries = info.GetQueryInsert();
+                        Console.WriteLine("Всего будет вставлено {0} записей", queries.Length);
+                        int step = 50;
+                        string line = new string('_', queries.Length / step + 1);
+                        Console.WriteLine(line);
                         foreach (string query in queries)
                         {
                             using (SQLiteCommand command = new SQLiteCommand(connection))
@@ -61,11 +66,17 @@ namespace DB_input
                                 command.CommandType = CommandType.Text;
                                 command.ExecuteNonQuery();
                                 count++;
+                                if (count % step == 0)
+                                {
+                                    Console.Write("+");
+                                }
                             }
                         }
+                        Console.WriteLine();
                     }
                     catch (Exception e)
                     {
+                        Console.WriteLine();
                         Console.WriteLine("Ошибка при добавлении записей " + e.Message);
                     }
                     finally
