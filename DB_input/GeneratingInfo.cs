@@ -112,7 +112,7 @@ namespace DB_input
             Refresh();
         }
 
-        public GeneratingInfo(int count_flight = 100000, int count_airports = 10, int count_airplanes = 20, int count_models = 10)
+        public GeneratingInfo(int count_flight = 100, int count_airports = 10, int count_airplanes = 20, int count_models = 10)
         {
             Refresh(count_flight, count_airports, count_airplanes, count_models);
         }

@@ -47,34 +47,35 @@ namespace DB_input
                         command.ExecuteNonQuery();
                         Console.WriteLine("Таблица создана");
                     }
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine("Ошибка при создании таблицы " + e.Message);
-                }
-                int count = 0;
-                try
-                {
-                    GeneratingInfo info = new GeneratingInfo();
-                    string[] queries = info.GetQueryInsert();
-                    foreach (string query in queries)
+
+                    int count = 0;
+                    try
                     {
-                        using (SQLiteCommand command = new SQLiteCommand(connection))
+                        GeneratingInfo info = new GeneratingInfo();
+                        string[] queries = info.GetQueryInsert();
+                        foreach (string query in queries)
                         {
-                            command.CommandText = query;
-                            command.CommandType = CommandType.Text;
-                            command.ExecuteNonQuery();
-                            count++;
+                            using (SQLiteCommand command = new SQLiteCommand(connection))
+                            {
+                                command.CommandText = query;
+                                command.CommandType = CommandType.Text;
+                                command.ExecuteNonQuery();
+                                count++;
+                            }
                         }
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine("Ошибка при добавлении записей " + e.Message);
+                    }
+                    finally
+                    {
+                        Console.WriteLine("Добавлено " + count + " записей");
                     }
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine("Ошибка при добавлении записей " + e.Message);
-                }
-                finally
-                {
-                    Console.WriteLine("Добавлено " + count + " записей");
+                    Console.WriteLine("Ошибка при создании таблицы " + e.Message);
                 }
             }
             
