@@ -244,6 +244,7 @@ namespace DB_input
                         }
                     }
                 }
+                code = code.ToUpper();
                 airports[i] = new Airport(code, city, country);
             }
 
@@ -255,11 +256,8 @@ namespace DB_input
                 int i_airport_out = x.Next(count_airports);
                 while (i_airport_in == i_airport_out)
                     i_airport_out = x.Next(count_airports);
-                DateTime dateTime = DateTime.Today;
-                dateTime.AddYears(-3);
-                dateTime.AddDays(x.Next(365 * 3));
-                dateTime.AddMinutes(x.Next(1440));
-                string str_date_time = dateTime.ToString("yyyy-MM-dd HH:mm:ss.fff");
+                DateTime dateTime = DateTime.Today.AddYears(-3).AddDays(x.Next(365 * 3)).AddMinutes(x.Next(1440));
+                string str_date_time = dateTime.ToString("yyyy-MM-dd HH:mm");           //("yyyy-MM-dd HH:mm:ss.fff");
                 flights[i] = new Flight(i_airplane, i_airport_in, i_airport_out, str_date_time);
             }
 
