@@ -297,7 +297,7 @@ namespace DB_input
                         number_passenger = pos + 1;
                         information[pos++] = new AllInfo(name_model, number_airplane, code_seat,
                             code_airport_in, city_airport_in, country_airport_in,
-                            country_airport_out, city_airport_out, country_airport_out,
+                            code_airport_out, city_airport_out, country_airport_out,
                             number_flight, date_time_flight, number_passenger);
                     }
                 }
@@ -315,7 +315,7 @@ namespace DB_input
             for (int i = 0; i < information.Length; i++)
             {
                 queries[i] = @"INSERT INTO [main].[all] 
-                            ([name_model], [number_airplane], [code_seat], [code_airport_in], [city_airport_in], [country_airport_in], [code_airport_out], [city_airport_out], [country_airport_out], [number_fligft], [date_time_flight], [number_passenger]) 
+                            ([name_model], [number_airplane], [code_seat], [code_airport_in], [city_airport_in], [country_airport_in], [code_airport_out], [city_airport_out], [country_airport_out], [number_flight], [date_time_flight], [number_passenger]) 
                             VALUES ('" + information[i].name_model + "', '" + information[i].number_airplane + "', '" + information[i].code_seat +
                             "', '" + information[i].code_airport_in + "', '" + information[i].city_airport_in + "', '" + information[i].country_airport_in +
                             "', '" + information[i].code_airport_out + "', '" + information[i].city_airport_out + "', '" + information[i].country_airport_out +

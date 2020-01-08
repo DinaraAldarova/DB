@@ -39,7 +39,7 @@ namespace DB_input
 	                        [code_airport_out]	    TEXT,
 	                        [city_airport_out]	    TEXT,
 	                        [country_airport_out]   TEXT,
-	                        [number_fligft]	        INTEGER,
+	                        [number_flight]	        INTEGER,
 	                        [date_time_flight]	    TEXT,
 	                        [number_passenger]	    INTEGER
                         )";
