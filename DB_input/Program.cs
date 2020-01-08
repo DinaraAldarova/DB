@@ -16,7 +16,7 @@ namespace DB_input
         {
             string baseName = "inputdatabase.db3";
 
-            //SQLiteConnection.CreateFile(baseName);
+            SQLiteConnection.CreateFile(baseName);
             SQLiteFactory factory = (SQLiteFactory)DbProviderFactories.GetFactory("System.Data.SQLite");
 
             using (SQLiteConnection connection = (SQLiteConnection)factory.CreateConnection())

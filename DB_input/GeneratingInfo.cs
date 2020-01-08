@@ -117,7 +117,7 @@ namespace DB_input
             Refresh(count_flight, count_airports, count_airplanes, count_models);
         }
 
-        public void Refresh(int count_flight = 100000, int count_airports = 10, int count_airplanes = 20, int count_models = 10)
+        public void Refresh(int count_flight = 100, int count_airports = 10, int count_airplanes = 20, int count_models = 10)
         {
             Random x = new Random();
             models = new Model[count_models];
@@ -137,7 +137,6 @@ namespace DB_input
                         break;
                     default:
                         throw new Exception("Генератор-то выдал и верхний предел тоже");
-                        break;
                 }
                 for (int j = 0; j < i; j++)
                 {
@@ -156,7 +155,7 @@ namespace DB_input
             airplanes = new Airplane[count_airplanes];
             for(int i = 0; i < count_airplanes; i++)
             {
-                airplanes[i] = new Airplane(x.Next(count_models), i, x.Next(20, 70), x.Next(4, 10));
+                airplanes[i] = new Airplane(x.Next(count_models), i, x.Next(10, 20), x.Next(3, 5));
             }
 
             airports = new Airport[count_airports];
