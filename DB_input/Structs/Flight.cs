@@ -1,4 +1,4 @@
-﻿namespace DB_input.Structs
+﻿namespace Client.Structs
 {
     struct Flight
     {

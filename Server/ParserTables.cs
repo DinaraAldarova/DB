@@ -2,9 +2,9 @@
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Client.TableRow;
+using Server.TableRow;
 
-namespace Client
+namespace Server
 {
     public class ParserTable
     {

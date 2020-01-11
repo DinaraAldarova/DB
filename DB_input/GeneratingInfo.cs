@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using DB_input.Structs;
+using Client.Structs;
 
-namespace DB_input
+namespace Client
 {
     class GeneratingInfo
     {

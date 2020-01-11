@@ -1,4 +1,4 @@
-﻿namespace Client.TableRow
+﻿namespace Server.TableRow
 {
     public class CrossTableFullRow
     {
