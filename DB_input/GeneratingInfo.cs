@@ -3,121 +3,30 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using DB_input.Structs;
 
 namespace DB_input
 {
-    struct Model
-    {
-        public string name;
-
-        public Model(string name)
-        {
-            this.name = name;
-        }
-    }
-    
-    struct Airplane
-    {
-        public int i_model;
-        public Int64 id;
-        public int length;
-        public int width;
-
-        public Airplane(int i_model, long id, int length, int width)
-        {
-            this.i_model = i_model;
-            this.id = id;
-            this.length = length;
-            this.width = width;
-        }
-
-        public int Capacity()
-        {
-            return length * width;
-        }
-    }
-
-    struct Airport
-    {
-        public string code;
-        public string city;
-        public string country;
-
-        public Airport(string code, string city, string country)
-        {
-            this.code = code;
-            this.city = city;
-            this.country = country;
-        }
-    }
-
-    struct Flight
-    {
-        public int i_airplane;
-        public int i_airport_in;
-        public int i_airport_out;
-        public string date_time;
-
-        public Flight(int i_airplane, int i_airport_in, int i_airport_out, string date_time)
-        {
-            this.i_airplane = i_airplane;
-            this.i_airport_in = i_airport_in;
-            this.i_airport_out = i_airport_out;
-            this.date_time = date_time;
-        }
-    }
-
-    struct AllInfo
-    {
-        public string name_model;
-        public Int64 number_airplane;
-        public string code_seat;
-        public string code_airport_in;
-        public string city_airport_in;
-        public string country_airport_in;
-        public string code_airport_out;
-        public string city_airport_out;
-        public string country_airport_out;
-        public Int64 number_flight;
-        public string date_time_flight;
-        public Int64 number_passenger;
-
-        public AllInfo(string name_model, long number_airplane, string code_seat, string code_airport_in, string city_airport_in, string country_airport_in, string code_airport_out, string city_airport_out, string country_airport_out, long number_flight, string date_time_flight, long number_passenger)
-        {
-            this.name_model = name_model;
-            this.number_airplane = number_airplane;
-            this.code_seat = code_seat;
-            this.code_airport_in = code_airport_in;
-            this.city_airport_in = city_airport_in;
-            this.country_airport_in = country_airport_in;
-            this.code_airport_out = code_airport_out;
-            this.city_airport_out = city_airport_out;
-            this.country_airport_out = country_airport_out;
-            this.number_flight = number_flight;
-            this.date_time_flight = date_time_flight;
-            this.number_passenger = number_passenger;
-        }
-    }
-
     class GeneratingInfo
     {
         Model[] models;
         Airplane[] airplanes;
+        Seat[] seats;
         Airport[] airports;
         Flight[] flights;
-        AllInfo[] information;
+        FullRow[] information;
 
         public GeneratingInfo()
         {
             Refresh();
         }
 
-        public GeneratingInfo(int count_flight = 100, int count_airports = 10, int count_airplanes = 20, int count_models = 10)
-        {
-            Refresh(count_flight, count_airports, count_airplanes, count_models);
-        }
+        //public GeneratingInfo(int count_flight = 50, int count_airports = 10, int count_airplanes = 20, int count_models = 10)
+        //{
+        //    Refresh(count_flight, count_airports, count_airplanes, count_models);
+        //}
 
-        public void Refresh(int count_flight = 100, int count_airports = 10, int count_airplanes = 20, int count_models = 10)
+        public void Refresh(int count_flights = 50, int count_airports = 10, int count_airplanes = 20, int count_models = 10)
         {
             Random x = new Random();
             models = new Model[count_models];
@@ -140,7 +49,7 @@ namespace DB_input
                 }
                 for (int j = 0; j < i; j++)
                 {
-                    if (models[j].name == name)
+                    if (models[j].name.Equals(name))
                     {
                         //Если такое название модели уже было, то в конец добавить букву
                         if (name[name.Length - 1] >= '0' && name[name.Length - 1] <= '9' || name[name.Length - 1] == 'Z')
@@ -228,11 +137,11 @@ namespace DB_input
                     default:
                         break;
                 }
-                code = city.Substring(0, 3);
+                code = city.Substring(0, 3).ToUpper();
                 
                 for (int j = 0; j < i ; j++)
                 {
-                    if (airports[j].code == code)
+                    if (airports[j].code.Equals(code))
                     {
                         if (code.Length == 3)
                         {
@@ -244,12 +153,11 @@ namespace DB_input
                         }
                     }
                 }
-                code = code.ToUpper();
                 airports[i] = new Airport(code, city, country);
             }
 
-            flights = new Flight[count_flight];
-            for(int i = 0; i < count_flight; i++)
+            flights = new Flight[count_flights];
+            for(int i = 0; i < count_flights; i++)
             {
                 int i_airplane = x.Next(count_airplanes);
                 int i_airport_in = x.Next(count_airports);
@@ -261,41 +169,61 @@ namespace DB_input
                 flights[i] = new Flight(i_airplane, i_airport_in, i_airport_out, str_date_time);
             }
 
-            int count_info = 0;
-            for (int i = 0; i < count_flight; i++)
+            long count_seats = 0;
+            for (int i = 0; i < count_airplanes; i++)
             {
-                count_info += airplanes[flights[i].i_airplane].Capacity();
+                count_seats += airplanes[i].Capacity();
+            }
+            seats = new Seat[count_seats];
+            long pos_seats = 0;
+            for (int i = 0; i < airplanes.Length; i++)
+            {
+                int length = airplanes[i].length;
+                int width = airplanes[i].width;
+                for (int j = 0; j < length; j++)
+                {
+                    for (int k = 0; k < width; k++)
+                    {
+                        string code_seat = (char)('A' + k) + (j + 1).ToString("D2");
+                        seats[pos_seats] = new Seat(pos_seats, code_seat, i);
+                        pos_seats++;
+                    }
+                }
+            }
+            
+            int count_pass = 0;
+            for (int i = 0; i < count_flights; i++)
+            {
+                count_pass += airplanes[flights[i].i_airplane].Capacity();
             }
 
-            information = new AllInfo[count_info];
-            int pos = 0;
-            for (int i = 0; i < count_flight; i++)
+            information = new FullRow[count_pass];
+            int pos_info = 0;
+            for (int i = 0; i < count_flights; i++)
             {
-                int length = airplanes[flights[i].i_airplane].length;
-                int width  = airplanes[flights[i].i_airplane].width;
-
                 //Для заполнения:
                 string name_model = models[airplanes[flights[i].i_airplane].i_model].name;
-                Int64 number_airplane = flights[i].i_airplane;
+                long number_airplane = flights[i].i_airplane;
                 string code_seat = "";
+                long id_seat = 0;
                 string code_airport_in = airports[flights[i].i_airport_in].code;
                 string city_airport_in = airports[flights[i].i_airport_in].city;
                 string country_airport_in = airports[flights[i].i_airport_in].country;
                 string code_airport_out = airports[flights[i].i_airport_out].code;
                 string city_airport_out = airports[flights[i].i_airport_out].city;
                 string country_airport_out = airports[flights[i].i_airport_out].country;
-                Int64 number_flight = i;
+                long number_flight = i;
                 string date_time_flight = flights[i].date_time;
-                Int64 number_passenger = 0;
+                long number_passenger = 0;
 
-
-                for (int j = 0; j < length; j++)
+                for (int j = 0; j < seats.Length; j++)
                 {
-                    for (int k = 0; k < width; k++)
+                    if (flights[i].i_airplane == seats[j].i_airplane)
                     {
-                        code_seat = (char)('A' + k) + j.ToString("D2");
-                        number_passenger = pos + 1;
-                        information[pos++] = new AllInfo(name_model, number_airplane, code_seat,
+                        code_seat = seats[j].code;
+                        id_seat = seats[j].id;
+                        number_passenger = pos_info + 1;
+                        information[pos_info++] = new FullRow(name_model, number_airplane, code_seat, id_seat,
                             code_airport_in, city_airport_in, country_airport_in,
                             code_airport_out, city_airport_out, country_airport_out,
                             number_flight, date_time_flight, number_passenger);
@@ -304,7 +232,7 @@ namespace DB_input
             }
         }
 
-        public AllInfo[] GetInfo()
+        public FullRow[] GetInfo()
         {
             return information;
         }
@@ -315,8 +243,8 @@ namespace DB_input
             for (int i = 0; i < information.Length; i++)
             {
                 queries[i] = @"INSERT INTO [main].[all] 
-                            ([name_model], [number_airplane], [code_seat], [code_airport_in], [city_airport_in], [country_airport_in], [code_airport_out], [city_airport_out], [country_airport_out], [number_flight], [date_time_flight], [number_passenger]) 
-                            VALUES ('" + information[i].name_model + "', '" + information[i].number_airplane + "', '" + information[i].code_seat +
+                            ([name_model], [number_airplane], [code_seat], [id_seat], [code_airport_in], [city_airport_in], [country_airport_in], [code_airport_out], [city_airport_out], [country_airport_out], [number_flight], [date_time_flight], [number_passenger]) 
+                            VALUES ('" + information[i].name_model + "', '" + information[i].number_airplane + "', '" + information[i].code_seat + "', '" + information[i].id_seat +
                             "', '" + information[i].code_airport_in + "', '" + information[i].city_airport_in + "', '" + information[i].country_airport_in +
                             "', '" + information[i].code_airport_out + "', '" + information[i].city_airport_out + "', '" + information[i].country_airport_out +
                             "', '" + information[i].number_flight + "', '" + information[i].date_time_flight + "', '" + information[i].number_passenger + "');";
