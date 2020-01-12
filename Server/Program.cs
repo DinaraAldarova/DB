@@ -16,7 +16,8 @@ namespace Server
 {
     class Program
     {
-        static int port = 8005; // порт для приема входящих запросов
+        static int port = 8080; // порт для приема входящих запросов
+        static string address = "192.168.100.8"; // адрес сервера
 
         static void Main(string[] args)
         {
@@ -24,11 +25,8 @@ namespace Server
             //https://metanit.com/sharp/net/3.2.php
 
             // получаем адреса для запуска сокета
-            IPEndPoint ipPoint = new IPEndPoint(IPAddress.Parse("127.0.0.1"), port);
+            IPEndPoint ipPoint = new IPEndPoint(IPAddress.Parse(address), port);
 
-            //List<string> str_data = new List<string>();
-            StringBuilder builder = new StringBuilder();
-            
             // создаем сокет
             Socket listenSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             try
@@ -41,59 +39,80 @@ namespace Server
 
                 Console.WriteLine("Сервер запущен. Ожидание подключений...");
 
-                //while (true)
-                //{
-                //    Socket handler = listenSocket.Accept();
-                //    // получаем сообщение
-                //    StringBuilder builder = new StringBuilder();
-                //    int bytes = 0; // количество полученных байтов
-                //    byte[] data = new byte[256]; // буфер для получаемых данных
-
-                //    do
-                //    {
-                //        bytes = handler.Receive(data);
-                //        builder.Append(Encoding.Unicode.GetString(data, 0, bytes));
-                //    }
-                //    while (handler.Available > 0);
-
-                //    Console.WriteLine(DateTime.Now.ToShortTimeString() + ": " + builder.ToString());
-
-                //    // отправляем ответ
-                //    string message = "ваше сообщение доставлено";
-                //    data = Encoding.Unicode.GetBytes(message);
-                //    handler.Send(data);
-                //    // закрываем сокет
-                //    handler.Shutdown(SocketShutdown.Both);
-                //    handler.Close();
-                //}
-
-
-                Socket handler = listenSocket.Accept();
-                // получаем сообщение
-                //StringBuilder builder = new StringBuilder();
-                int bytes = 0; // количество полученных байтов
-                byte[] data = new byte[2048]; // буфер для получаемых данных
-                string str;
-                
-                do
+                while (true)
                 {
-                    bytes = handler.Receive(data);
-                    str = Encoding.Unicode.GetString(data, 0, bytes);
-                    //str_data.Add(str);
-                    builder.Append(str);
+                    //подключаем нового пользователя
+                    Socket handler = listenSocket.Accept();
+                    try
+                    {
+                        StringBuilder builder = new StringBuilder();
+                        int bytes = 0;          // количество полученных байт
+                        int bytes_total = 0;    // количество ожидаемых в сумме байт
+                        int bytes_received = 0; // количество полученных в сумме байт
+                        byte[] data = new byte[2048]; // буфер для получаемых данных
+                        handler.ReceiveTimeout = 2000;
+
+                        //получаем длину сообщения
+                        bytes = handler.Receive(data);
+                        string[] res = Encoding.Unicode.GetString(data, 0, bytes).Split(' ');
+                        if (res.Length != 2 || !res[0].Equals("отправка"))
+                            throw new Exception("Получены некорректные данные");
+                        bytes_total = int.Parse(res[1]);
+
+                        //отвечаем, что готовы
+                        data = Encoding.Unicode.GetBytes("ready");
+                        handler.Send(data);
+
+                        // получаем сообщение
+                        data = new byte[2048];
+                        do
+                        {
+                            bytes = handler.Receive(data);
+                            bytes_received += bytes;
+                            builder.Append(Encoding.Unicode.GetString(data, 0, bytes));
+                        }
+                        while (bytes_received < bytes_total);
+
+                        // отправляем ответ
+                        string message = "доставлено " + bytes_received;
+                        data = Encoding.Unicode.GetBytes(message);
+                        handler.Send(data);
+
+                        // закрываем сокет
+                        handler.Shutdown(SocketShutdown.Both);
+                        handler.Close();
+
+
+                        //дешифруем
+
+
+                        //Код работы с JSON взят с 
+                        //https://котодомик.рф/2015/02/18/json_csharp/
+                        //но лучше найти офф. документацию
+
+                        List<FullRow> rows = JsonConvert.DeserializeObject<List<FullRow>>(builder.ToString());
+                        Console.WriteLine("Конвертация строк");
+                        List<CrossTableFullRow> tableRows = new List<CrossTableFullRow>();
+                        foreach (FullRow row in rows)
+                        {
+                            tableRows.Add(new ParserRow(row).GetCrossTableFullRow());
+                        }
+                        ParserTable tables = new ParserTable(tableRows);
+
+                        Console.WriteLine("Запись данных в БД PostgreSQL");
+                        WritePostgreSQL(tables);
+                    }
+                    finally
+                    {
+                        try
+                        {
+                            // закрываем сокет еще раз, вдруг он еще открыт
+                            handler.Shutdown(SocketShutdown.Both);
+                            handler.Close();
+                        }
+                        catch { }
+                    }
                 }
-                //while (!str.Equals("end"));
-                while (handler.Available > 0);
-
-                //Console.WriteLine(DateTime.Now.ToShortTimeString() + ": " + builder.ToString());
-
-                // отправляем ответ
-                string message = "доставлено " + builder.Length;
-                data = Encoding.Unicode.GetBytes(message);
-                handler.Send(data);
-                // закрываем сокет
-                handler.Shutdown(SocketShutdown.Both);
-                handler.Close();
             }
             catch (Exception ex)
             {
@@ -103,42 +122,10 @@ namespace Server
                 Environment.Exit(0);
             }
 
-
-
-
-
-
-
-
-
-
-
-
-            //Код работы с JSON взят с 
-            //https://котодомик.рф/2015/02/18/json_csharp/
-            //но лучше найти офф. документацию
-
-            //сюда получить данные
-            List<FullRow> rows = new List<FullRow>();
-            rows = JsonConvert.DeserializeObject<List<FullRow>>(builder.ToString());
-
-            Console.WriteLine("Конвертация строк");
-            List<CrossTableFullRow> tableRows = new List<CrossTableFullRow>();
-            foreach (FullRow row in rows)
-            {
-                tableRows.Add(new ParserRow(row).GetCrossTableFullRow());
-            }
-
-            Console.WriteLine("Конвертация в таблицы");
-            ParserTable tables = new ParserTable(tableRows);
-
-            Console.WriteLine("Запись данных в БД PostgreSQL");
-            WritePostgreSQL(tables);
-
-            Console.WriteLine();
-            Console.WriteLine("Нажмите любую клавишу для подтверждения...");
-            Console.ReadKey(true);
-            Environment.Exit(0);
+            //Console.WriteLine();
+            //Console.WriteLine("Нажмите любую клавишу для подтверждения...");
+            //Console.ReadKey(true);
+            //Environment.Exit(0);
         }
 
         static public void WritePostgreSQL(ParserTable tables)
