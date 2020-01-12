@@ -11,6 +11,7 @@ using Server.TableRow;
 using Newtonsoft.Json;
 using System.Net;
 using System.Net.Sockets;
+using System.Security.Cryptography;
 
 namespace Server
 {
@@ -24,10 +25,7 @@ namespace Server
             //Код подключения по сокетам взят с сайта
             //https://metanit.com/sharp/net/3.2.php
 
-            // получаем адреса для запуска сокета
             IPEndPoint ipPoint = new IPEndPoint(IPAddress.Parse(address), port);
-
-            // создаем сокет
             Socket listenSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             try
             {
@@ -52,14 +50,51 @@ namespace Server
                         byte[] data = new byte[2048]; // буфер для получаемых данных
                         handler.ReceiveTimeout = 2000;
 
+                        //Create a new RSACryptoServiceProvider object.
+                        RSACryptoServiceProvider RSA = new RSACryptoServiceProvider(2048);
+
+                        //Export the key information to an RSAParameters object.
+                        //Pass false to export the public key information or pass
+                        //true to export public and private key information.
+                        RSAParameters RSAParams = RSA.ExportParameters(false);
+                        string rsaKey = JsonConvert.SerializeObject(RSAParams);
+
+                        //отправляем публичный ключ RSA
+                        data = Encoding.Unicode.GetBytes(rsaKey);
+                        handler.Send(data);
+
+                        //получаем ключ симметричного шифрования, зашифрованный RSA
+                        byte[] encrypted_key = new byte[256];
+                        bytes = handler.Receive(encrypted_key);
+
+                        //дешифруем ключ симметричного шифрования приватным ключом RSA
+                        //byte[] encrypted_key = RSAEncrypt(key_simm, RSA.ExportParameters(false));
+                        byte[] decrypted_key = RSADecrypt(encrypted_key, RSA.ExportParameters(true));
+                        
+                        //удаляем из памяти экземпляр класса асиметричного шифрования
+                        RSA.Dispose();
+
+                        //подтверждаем готовность
+                        data = Encoding.Unicode.GetBytes("ready");
+                        handler.Send(data);
+
+                        //получаем инициализующий вектор шифрования
+                        byte[] iv = new byte[16];
+                        bytes = handler.Receive(iv);
+
+                        //подтверждаем готовность
+                        data = Encoding.Unicode.GetBytes("ready");
+                        handler.Send(data);
+
                         //получаем длину сообщения
+                        data = new byte[2048];
                         bytes = handler.Receive(data);
                         string[] res = Encoding.Unicode.GetString(data, 0, bytes).Split(' ');
                         if (res.Length != 2 || !res[0].Equals("отправка"))
                             throw new Exception("Получены некорректные данные");
                         bytes_total = int.Parse(res[1]);
 
-                        //отвечаем, что готовы
+                        //подтверждаем готовность
                         data = Encoding.Unicode.GetBytes("ready");
                         handler.Send(data);
 
@@ -73,7 +108,7 @@ namespace Server
                         }
                         while (bytes_received < bytes_total);
 
-                        // отправляем ответ
+                        // отправляем количество полученных байт
                         string message = "доставлено " + bytes_received;
                         data = Encoding.Unicode.GetBytes(message);
                         handler.Send(data);
@@ -82,15 +117,15 @@ namespace Server
                         handler.Shutdown(SocketShutdown.Both);
                         handler.Close();
 
-
                         //дешифруем
-
+                        //string encrypted = Encrypt(str_data, cipher.Key, cipher.IV);
+                        string decrypted = Decrypt(builder.ToString(), decrypted_key, iv);
 
                         //Код работы с JSON взят с 
                         //https://котодомик.рф/2015/02/18/json_csharp/
                         //но лучше найти офф. документацию
 
-                        List<FullRow> rows = JsonConvert.DeserializeObject<List<FullRow>>(builder.ToString());
+                        List<FullRow> rows = JsonConvert.DeserializeObject<List<FullRow>>(decrypted);
                         Console.WriteLine("Конвертация строк");
                         List<CrossTableFullRow> tableRows = new List<CrossTableFullRow>();
                         foreach (FullRow row in rows)
@@ -338,7 +373,7 @@ namespace Server
                     }
                     Console.WriteLine("В таблицу Passenger добавлено {0} записей", count);
 
-                    Console.WriteLine("Все данные добавлены");
+                    Console.WriteLine("Все данные добавлены\n");
                     connection.Close();
                 }
             }
@@ -363,5 +398,103 @@ namespace Server
         //    //    Console.WriteLine(item.ToString());
         //    //}
         //}
+
+        static public string Encrypt(string text, byte[] key, byte[] iv)
+        {
+            //Код взят со страницы
+            //https://habr.com/ru/post/254909/
+            //и офф. документации
+            //https://docs.microsoft.com/ru-ru/dotnet/api/system.security.cryptography.rijndael?view=netcore-2.1
+
+            Rijndael cipher = Rijndael.Create();
+            cipher.Key = key;
+            cipher.IV = iv;
+
+            ICryptoTransform t = cipher.CreateEncryptor();
+            //string text = "some_text_to_encrypt";
+            byte[] textInBytes = Encoding.Unicode.GetBytes(text);
+            byte[] result = t.TransformFinalBlock(textInBytes, 0, textInBytes.Length);
+            return Convert.ToBase64String(result);
+        }
+
+        static public string Decrypt(string text, byte[] key, byte[] iv)
+        {
+            //Код взят со страницы
+            //https://habr.com/ru/post/254909/
+            //и офф. документации
+            //https://docs.microsoft.com/ru-ru/dotnet/api/system.security.cryptography.rijndael?view=netcore-2.1
+
+            Rijndael cipher = Rijndael.Create();
+            cipher.Key = key;
+            cipher.IV = iv;
+
+            ICryptoTransform t = cipher.CreateDecryptor();
+            //string text = "some_text_to_encrypt";
+            byte[] textInBytes = Convert.FromBase64String(text);
+            byte[] result = t.TransformFinalBlock(textInBytes, 0, textInBytes.Length);
+            return Encoding.Unicode.GetString(result);
+        }
+
+        public static byte[] RSAEncrypt(byte[] DataToEncrypt, RSAParameters RSAKeyInfo, bool DoOAEPPadding = false)
+        {
+            //from
+            //https://docs.microsoft.com/ru-ru/dotnet/api/system.security.cryptography.rsacryptoserviceprovider?view=netcore-3.1
+
+            try
+            {
+                byte[] encryptedData;
+                //Create a new instance of RSACryptoServiceProvider.
+                using (RSACryptoServiceProvider RSA = new RSACryptoServiceProvider())
+                {
+
+                    //Import the RSA Key information. This only needs
+                    //toinclude the public key information.
+                    RSA.ImportParameters(RSAKeyInfo);
+
+                    //Encrypt the passed byte array and specify OAEP padding.  
+                    //OAEP padding is only available on Microsoft Windows XP or
+                    //later.  
+                    encryptedData = RSA.Encrypt(DataToEncrypt, DoOAEPPadding);
+                }
+                return encryptedData;
+            }
+            //Catch and display a CryptographicException  
+            //to the console.
+            catch (CryptographicException e)
+            {
+                Console.WriteLine(e.Message);
+
+                return null;
+            }
+        }
+
+        public static byte[] RSADecrypt(byte[] DataToDecrypt, RSAParameters RSAKeyInfo, bool DoOAEPPadding = false)
+        {
+            try
+            {
+                byte[] decryptedData;
+                //Create a new instance of RSACryptoServiceProvider.
+                using (RSACryptoServiceProvider RSA = new RSACryptoServiceProvider())
+                {
+                    //Import the RSA Key information. This needs
+                    //to include the private key information.
+                    RSA.ImportParameters(RSAKeyInfo);
+
+                    //Decrypt the passed byte array and specify OAEP padding.  
+                    //OAEP padding is only available on Microsoft Windows XP or
+                    //later.  
+                    decryptedData = RSA.Decrypt(DataToDecrypt, DoOAEPPadding);
+                }
+                return decryptedData;
+            }
+            //Catch and display a CryptographicException  
+            //to the console.
+            catch (CryptographicException e)
+            {
+                Console.WriteLine(e.ToString());
+
+                return null;
+            }
+        }
     }
 }
