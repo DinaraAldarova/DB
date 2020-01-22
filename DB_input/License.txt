@@ -1,0 +1,26 @@
+﻿System.Security.Cryptography содержит библиотеки Rijndael и RSA.
+System.Net.Sockets содержит библиотеку, используемую для работы с сокетами
+Код использования класса Rijndael 
+https://docs.microsoft.com/ru-ru/dotnet/api/system.security.cryptography.rijndael?view=netframework-4.8
+Код использования класса RSACryptoServiceProvider 
+https://docs.microsoft.com/ru-ru/dotnet/api/system.security.cryptography.rsacryptoserviceprovider?view=netcore-3.1
+Использование системных библиотек c# и документации MSDN только в личных и некоммерческих целях.
+https://docs.microsoft.com/ru-ru/legal/termsofuse
+
+Newtonsoft.Json используется для сериализации и десериализации объектов
+MIT license, свободное распространение и коммерческое использование
+Код использования взят на официальном сайте, лицензия та же
+https://github.com/JamesNK/Newtonsoft.Json/blob/master/LICENSE.md
+
+Статьи с ресурса habr.ru:
+Использование библиотеки Rijndael
+https://habr.com/ru/post/254909/
+Использование SQLite в .Net приложениях
+https://habr.com/ru/post/56694/
+Пользовательское соглашение ресурса Хабр:
+https://account.habr.com/info/agreement/?hl=ru_RU&_ga=2.30196278.848505746.1576475534-1057848917.1575520353
+По-умолчанию материалы статей доступны для свободного возпроизведения и распространения
+
+Код подключения по сокетам взят с сайта
+https://metanit.com/sharp/net/3.2.php
+Бесплатно для некоммерческого использования

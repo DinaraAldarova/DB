@@ -292,11 +292,6 @@ namespace Client
 
         static public string Encrypt(string text, byte[] key, byte[] iv)
         {
-            //Код взят со страницы
-            //https://habr.com/ru/post/254909/
-            //и офф. документации
-            //https://docs.microsoft.com/ru-ru/dotnet/api/system.security.cryptography.rijndael?view=netcore-2.1
-
             Rijndael cipher = Rijndael.Create();
             cipher.Key = key;
             cipher.IV = iv;
@@ -310,11 +305,6 @@ namespace Client
 
         static public string Decrypt(string text, byte[] key, byte[] iv)
         {
-            //Код взят со страницы
-            //https://habr.com/ru/post/254909/
-            //и офф. документации
-            //https://docs.microsoft.com/ru-ru/dotnet/api/system.security.cryptography.rijndael?view=netcore-2.1
-
             Rijndael cipher = Rijndael.Create();
             cipher.Key = key;
             cipher.IV = iv;

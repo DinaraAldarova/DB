@@ -1,17 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Data;
-using System.Data.Common;
-using System.Data.SQLite;
+﻿using Newtonsoft.Json;
 using Npgsql;
 using Server.TableRow;
-using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using System.Security.Cryptography;
+using System.Text;
 
 namespace Server
 {
@@ -22,9 +17,6 @@ namespace Server
 
         static void Main(string[] args)
         {
-            //Код подключения по сокетам взят с сайта
-            //https://metanit.com/sharp/net/3.2.php
-
             IPEndPoint ipPoint = new IPEndPoint(IPAddress.Parse(address), port);
             Socket listenSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             try
@@ -401,11 +393,6 @@ namespace Server
 
         static public string Encrypt(string text, byte[] key, byte[] iv)
         {
-            //Код взят со страницы
-            //https://habr.com/ru/post/254909/
-            //и офф. документации
-            //https://docs.microsoft.com/ru-ru/dotnet/api/system.security.cryptography.rijndael?view=netcore-2.1
-
             Rijndael cipher = Rijndael.Create();
             cipher.Key = key;
             cipher.IV = iv;
@@ -419,11 +406,6 @@ namespace Server
 
         static public string Decrypt(string text, byte[] key, byte[] iv)
         {
-            //Код взят со страницы
-            //https://habr.com/ru/post/254909/
-            //и офф. документации
-            //https://docs.microsoft.com/ru-ru/dotnet/api/system.security.cryptography.rijndael?view=netcore-2.1
-
             Rijndael cipher = Rijndael.Create();
             cipher.Key = key;
             cipher.IV = iv;
@@ -437,9 +419,6 @@ namespace Server
 
         public static byte[] RSAEncrypt(byte[] DataToEncrypt, RSAParameters RSAKeyInfo, bool DoOAEPPadding = false)
         {
-            //from
-            //https://docs.microsoft.com/ru-ru/dotnet/api/system.security.cryptography.rsacryptoserviceprovider?view=netcore-3.1
-
             try
             {
                 byte[] encryptedData;
